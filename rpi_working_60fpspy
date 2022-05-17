@@ -4,8 +4,6 @@ import struct
 import time
 import picamera
 
-# Using MJPEG Splitting from Rapid Capture and Processing: averages 69fps!
-
 class SplitFrames(object):
     def __init__(self, connection):
         self.connection = connection
@@ -21,7 +19,8 @@ class SplitFrames(object):
                 self.connection.write(struct.pack('<L', size))
                 self.connection.flush()
                 self.stream.seek(0)
-                self.connection.write(self.stream.read(size))
+                text = self.stream.read(size)
+                self.connection.write(text)
                 self.count += 1
                 self.stream.seek(0)
         self.stream.write(buf)
@@ -35,16 +34,16 @@ try:
         time.sleep(2)
         start = time.time()
         camera.start_recording(output, format='mjpeg')
-    while True:
-        try:
-            camera.wait_recording(30)
-            print ("30s has passed")
-        except KeyboardInterrupt:
-            camera.stop_recording()
-            # Write the terminating 0-length to the connection to let the
-            # server know we're done
-            connection.write(struct.pack('<L', 0))
-            break
+        while True:
+            try:
+                camera.wait_recording(30)
+                print ("30s has passed")
+            except KeyboardInterrupt:
+                camera.stop_recording()
+                # Write the terminating 0-length to the connection to let the
+                # server know we're done
+                connection.write(struct.pack('<L', 0))
+                break
 finally:
     connection.close()
     client_socket.close()

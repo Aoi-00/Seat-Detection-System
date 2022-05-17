@@ -12,6 +12,7 @@ from PIL import Image
 import cv2
 import os
 import json
+import pyAesCrypt
 
 def bb_intersection_over_union(boxA, boxB): #calculate Intersection over union values of 2 Boxes (Seat & Person/Item)
 	# determine the (x, y)-coordinates of the intersection rectangle
@@ -45,7 +46,7 @@ def predict(img_batch):
 server_socket = socket.socket()
 server_socket.bind(('0.0.0.0', 8000))
 server_socket.listen(0)
-
+password = "testencrypt"
 # Accept a single connection and make a file-like object out of it
 connection = server_socket.accept()[0].makefile('rb')
 
@@ -70,7 +71,12 @@ try:
         # Rewind the stream, open it as an image with PIL and do some
         # processing on it
         image_stream.seek(0)
-        image = Image.open(image_stream)
+        # image = Image.open(image_stream)
+        # Test Decryption
+        decryptData = io.BytesIO()
+        pyAesCrypt.decryptStream(image_stream, decryptData, password, image_len,len(image_stream.getvalue()))
+        image = Image.open(decryptData.getvalue())
+        
         # Group into Batch of images & Predict
         results = predict([image])
 
@@ -79,34 +85,34 @@ try:
 
 
         # Check for occupancy
-        coords = results.pandas().xyxy[0].to_dict(orient="records")
-        occupancy = [0,0,0,0]              
-        for coord in coords:  # Iterate through results
-            con = coord['confidence']
-            cs = coord['class']
-            name = coord['name']
-            x1 = int(coord['xmin'])
-            y1 = int(coord['ymin'])
-            x2 = int(coord['xmax'])
-            y2 = int(coord['ymax'])
-            if name == 'person' or name == 'laptop' or name == 'book' or name == 'cup' or name == 'suitcase' or name == 'bottle':
-                boxA = [x1,y1,x2,y2] #Calculate overlap against each bbox 
-                for index, coord in enumerate(predefinedBBox): 
-                    x1 = int(coord['xmin'])
-                    y1 = int(coord['ymin'])
-                    x2 = int(coord['xmax'])
-                    y2 = int(coord['ymax'])
-                    boxB = [x1,y1,x2,y2]
-                    cv2.putText(cv_image, 'Seat{0}'.format(index), (x1,y1-10),cv2.FONT_HERSHEY_SIMPLEX,0.5,(36,255,12),2 )
-                    if occupancy[index] != 1:
-                        intersect_area = bb_intersection_over_union(boxA,boxB) #Lower overlap requirement for items?
-                        if intersect_area > 0.01:
-                            cv2.rectangle(cv_image,(x1+1, y1+1), (x2+1, y2+1), (0, 0, 255), 2)
-                            occupancy[index] = 1
-                            print(intersect_area,occupancy)
-                        else:
-                            cv2.rectangle(cv_image,(x1+1, y1+1), (x2+1, y2+1), (0, 255, 0), 2)
-                            print(intersect_area,occupancy)
+        # coords = results.pandas().xyxy[0].to_dict(orient="records")
+        # occupancy = [0,0,0,0]              
+        # for coord in coords:  # Iterate through results
+        #     con = coord['confidence']
+        #     cs = coord['class']
+        #     name = coord['name']
+        #     x1 = int(coord['xmin'])
+        #     y1 = int(coord['ymin'])
+        #     x2 = int(coord['xmax'])
+        #     y2 = int(coord['ymax'])
+        #     if name == 'person' or name == 'laptop' or name == 'book' or name == 'cup' or name == 'suitcase' or name == 'bottle':
+        #         boxA = [x1,y1,x2,y2] #Calculate overlap against each bbox 
+        #         for index, coord in enumerate(predefinedBBox): 
+        #             x1 = int(coord['xmin'])
+        #             y1 = int(coord['ymin'])
+        #             x2 = int(coord['xmax'])
+        #             y2 = int(coord['ymax'])
+        #             boxB = [x1,y1,x2,y2]
+        #             cv2.putText(cv_image, 'Seat{0}'.format(index), (x1,y1-10),cv2.FONT_HERSHEY_SIMPLEX,0.5,(36,255,12),2 )
+        #             if occupancy[index] != 1:
+        #                 intersect_area = bb_intersection_over_union(boxA,boxB) #Lower overlap requirement for items?
+        #                 if intersect_area > 0.01:
+        #                     cv2.rectangle(cv_image,(x1+1, y1+1), (x2+1, y2+1), (0, 0, 255), 2)
+        #                     occupancy[index] = 1
+        #                     print(intersect_area,occupancy)
+        #                 else:
+        #                     cv2.rectangle(cv_image,(x1+1, y1+1), (x2+1, y2+1), (0, 255, 0), 2)
+        #                     print(intersect_area,occupancy)
         cv2.imshow('Stream',cv_image)
         
         # finish = time.time()
