@@ -13,6 +13,7 @@ import cv2
 import os
 import json
 import pyAesCrypt
+import base64
 
 def bb_intersection_over_union(boxA, boxB): #calculate Intersection over union values of 2 Boxes (Seat & Person/Item)
 	# determine the (x, y)-coordinates of the intersection rectangle
@@ -41,20 +42,35 @@ def predict(img_batch):
     #results.save() #save pic
     return results
 
+def base64_pil(base64_str):
+    image = base64.b64decode(base64_str)
+    image = io.BytesIO(image)
+    image = Image.open(image)
+    return image
+
+def decrypt(image,key):
+    # convert to byte array for simple encryption on numeric data
+    image = bytearray(image)
+    # Perform XOR on each value of bytearray
+    for index, values in enumerate(image):
+        image[index] = values ^ key
+    return image
+
+
+# Iniitialise model and seat bounding boxes
+# model = torch.hub.load('ultralytics/yolov5', 'yolov5s',
+#                            pretrained=True)
+# f = open('initBB.json')
+# predefinedBBox = json.load(f)
+
 # Start a socket listening for connections on 0.0.0.0:8000 (0.0.0.0 means
 # all interfaces)
 server_socket = socket.socket()
 server_socket.bind(('0.0.0.0', 8000))
 server_socket.listen(0)
-password = "testencrypt"
 # Accept a single connection and make a file-like object out of it
 connection = server_socket.accept()[0].makefile('rb')
-
-# Iniitialise model and seat bounding boxes
-model = torch.hub.load('ultralytics/yolov5', 'yolov5s',
-                           pretrained=True)
-f = open('initBB.json')
-predefinedBBox = json.load(f)
+key = 34
 
 try:
     while True:
@@ -71,14 +87,13 @@ try:
         # Rewind the stream, open it as an image with PIL and do some
         # processing on it
         image_stream.seek(0)
-        # image = Image.open(image_stream)
-        # Test Decryption
-        decryptData = io.BytesIO()
-        pyAesCrypt.decryptStream(image_stream, decryptData, password, image_len,len(image_stream.getvalue()))
-        image = Image.open(decryptData.getvalue())
-        
+        image = Image.open(image_stream)
+        # Decrypt Image 
+        print("decrypting..")
+        image = decrypt(image,key)
+
         # Group into Batch of images & Predict
-        results = predict([image])
+        #results = predict([image])
 
         # Display
         cv_image = np.array(image)
