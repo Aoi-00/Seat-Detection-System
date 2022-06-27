@@ -30,7 +30,8 @@ client_socket.connect(('192.168.26.14', 8000))
 connection = client_socket.makefile('wb')
 try:
     output = SplitFrames(connection)
-    with picamera.PiCamera(resolution='VGA', framerate=100) as camera:
+    with picamera.PiCamera(resolution='1080p', framerate=2) as camera:
+        camera.rotation = 180
         time.sleep(2)
         start = time.time()
         camera.start_recording(output, format='mjpeg')
