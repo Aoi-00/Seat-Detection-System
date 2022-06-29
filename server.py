@@ -50,14 +50,12 @@ def base64_pil(base64_str):
     image = Image.open(image)
     return image
 
-
-def decrypt(image, key):
-    # convert to byte array for simple encryption on numeric data
-    image = bytearray(image)
-    # Perform XOR on each value of bytearray
-    for index, values in enumerate(image):
-        image[index] = values ^ key
-    return image
+def update_occupancy(occupancy,seat):
+    print(occupancy)
+    for index,seatOccupancy in enumerate(occupancy):
+        #print("seat", index, seatOccupancy) seats are now shallow copied..
+        seat[index].append(seatOccupancy)
+        print(index, seat[index], seatOccupancy)
 
 
 # Iniitialise model and seat bounding boxes
@@ -65,6 +63,10 @@ model = torch.hub.load('ultralytics/yolov5', 'yolov5s',
                        pretrained=True)
 f = open('initBB.json')
 predefinedBBox = json.load(f)
+seat_queue = deque(maxlen=2) #Queue of max 2 lengths/frames for each seat
+seat_queue.extend([0,0]) #Initialise as empty(0) for both
+seat = [seat_queue, seat_queue,seat_queue,seat_queue] 
+print(seat)
 
 # Start a socket listening for connections on 0.0.0.0:8000 (0.0.0.0 means
 # all interfaces)
@@ -103,10 +105,6 @@ try:
 
         # Check for occupancy
         coords = results.pandas().xyxy[0].to_dict(orient="records")
-        seat_queue = deque(maxlen=2) #Queue of max 2 lengths/frames for each seat
-        seat_queue.extend([0,0]) #Initialise as empty(0) for both
-        seat1 = seat2 = seat3 = seat4 = seat_queue 
-        print(seat1, seat2, seat3, seat4)
         occupancy = [0, 0, 0, 0]
         for coord in coords:  # Iterate through results
             con = coord['confidence']
@@ -116,7 +114,7 @@ try:
             y1 = int(coord['ymin'])
             x2 = int(coord['xmax'])
             y2 = int(coord['ymax'])
-            if name == 'person' or name == 'backpack' or name == 'suitcase' or name == 'bottle':
+            if name == 'person' or name == 'backpack' or name == 'suitcase' or name == 'bottle': # If any of these classes identified
                 boxA = [x1, y1, x2, y2]  # Calculate overlap against each bbox
                 for index, coord in enumerate(predefinedBBox):
                     x1 = int(coord['xmin'])
@@ -132,13 +130,16 @@ try:
                         if intersect_area > 0.01: #Occupied
                             cv2.rectangle(cv_image, (x1+1, y1+1),
                                           (x2+1, y2+1), (0, 0, 255), 2)
+                            
                             occupancy[index] = 1
-                            print(intersect_area, occupancy)
+                            #print(intersect_area, occupancy)
 
                         else: #Unoccupied
                             cv2.rectangle(cv_image, (x1+1, y1+1),
                                           (x2+1, y2+1), (0, 255, 0), 2)
-                            print(intersect_area, occupancy)
+                            #print(intersect_area, occupancy)
+        update_occupancy(occupancy,seat)
+
         cv2.imshow('Stream', cv_image)
         print("Image time:" + str(time.time() - start))
 
