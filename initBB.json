@@ -1,6 +1,6 @@
 [
-    {"xmin": 453, "ymin": 586, "xmax":900, "ymax": 950},
-    {"xmin": 600, "ymin": 200, "xmax":850, "ymax": 350},
-    {"xmin": 1200, "ymin": 550, "xmax":1550, "ymax": 950},
-    {"xmin": 1000, "ymin": 200, "xmax":1300, "ymax": 400}
+    {"xmin": 150, "ymin": 586, "xmax":700, "ymax": 900},
+    {"xmin": 600, "ymin": 200, "xmax":950, "ymax": 500},
+    {"xmin": 1000, "ymin": 600, "xmax":1550, "ymax": 950},
+    {"xmin": 1000, "ymin": 300, "xmax":1300, "ymax": 550}
 ]
