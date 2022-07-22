@@ -1,3 +1,4 @@
+import enum
 import io
 import socket
 import struct
@@ -12,8 +13,11 @@ import cv2
 import json
 import base64
 from collections import deque
+import math
 
-
+def calculateDistance(x1,y1,x2,y2):
+    dist = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+    return dist
 # calculate Intersection over union values of 2 Boxes (Seat & Person/Item)
 def bb_intersection_over_union(boxA, boxB):
     # determine the (x, y)-coordinates of the intersection rectangle
@@ -50,23 +54,76 @@ def base64_pil(base64_str):
     image = Image.open(image)
     return image
 
-def update_occupancy(occupancy,seat):
-    print(occupancy)
-    for index,seatOccupancy in enumerate(occupancy):
-        #print("seat", index, seatOccupancy) seats are now shallow copied..
-        seat[index].append(seatOccupancy)
-        print(index, seat[index], seatOccupancy)
+def updateBB(chairs, Bbox,persons):
+    allChairs = np.array(chairs)
+    chairExists = []
+    # Find whether a chair/human exists in seat
+    for index,bbox in enumerate(Bbox):
+        boxA = [int(bbox['xmin']),int(bbox['ymin']),int(bbox['xmax']),int(bbox['ymax'])]
+        chairExists.append(False)
+        for chair in chairs:
+            boxB = [int(chair['xmin']),int(chair['ymin']),int(chair['xmax']),int(chair['ymax'])]
+            if bb_intersection_over_union(boxA,boxB) > 0:
+                chairExists[index] = True
+                break
+        for person in persons:
+            boxB = [int(person['xmin']),int(person['ymin']),int(person['xmax']),int(person['ymax'])]
+            if bb_intersection_over_union(boxA,boxB) > 0:
+                chairExists[index] = True
+                break
 
+    if all(chairExists) == False: #If there are bounding boxes without a chair in it
+        # Find chairs not in any Bbox currently
+        chairsNotInBbox = []
+        for index,chair in enumerate(chairs):
+            boxA = [int(chair['xmin']),int(chair['ymin']),int(chair['xmax']),int(chair['ymax'])]
+            chairsNotInBbox.append(True)
+            for bbox in Bbox:
+                boxB = [int(bbox['xmin']),int(bbox['ymin']),int(bbox['xmax']),int(bbox['ymax'])]
+                if bb_intersection_over_union(boxA,boxB) > 0: # Calculate if any chair overlaps with bbox
+                    chairsNotInBbox[index] = False
+                    break
+        # Obtain chairs not in any bbox
+        filter = np.array(chairsNotInBbox)
+        availChairs = allChairs[filter].tolist() 
+
+        if (len(availChairs)):
+            for i,bbox in enumerate(Bbox):
+                if chairExists[i] == False:
+                    oldBboxCenter = [int(Bbox[i]['xmax'])-int(Bbox[i]['xmin']), int(Bbox[i]['ymax'])-int(Bbox[i]['ymin'])]
+                    dist = []
+                    for index,chair in enumerate(availChairs): #Update bbox with nearest distance chair (that is not in any bbox yet)
+                        chairCenter = [int(chair['xmax'])-int(chair['xmin']),int(chair['ymax'])-int(chair['ymin'])]
+                        dist.append(calculateDistance(oldBboxCenter[0],oldBboxCenter[1],chairCenter[0],chairCenter[1])) 
+                    Bbox[i]=availChairs[dist.index(min(dist))]
+    return Bbox
+
+
+def update_occupancy(occupancy,seat):
+    
+    for index,seatOccupancy in enumerate(occupancy):
+        seat[index].pop(0)
+        seat[index].append(seatOccupancy)
+        occupancy[index] = 1 if all(occupied == 1 for occupied in seat[index]) else 0
+    return occupancy
+
+def drawBbox(occupancy, cv,predefinedBBox):
+    for index, bbox in enumerate(predefinedBBox):
+        if occupancy[index] == 1: #Occupied, draw red
+            cv2.rectangle(cv, (int(bbox['xmin'])+1, int(bbox['ymin'])+1),
+                 (int(bbox['xmax'])+1, int(bbox['ymax'])+1), (0, 0, 255), 2)
+        else : #Vacant, draw green
+            cv2.rectangle(cv, (int(bbox['xmin'])+1, int(bbox['ymin'])+1),
+                 (int(bbox['xmax'])+1, int(bbox['ymax'])+1), (0, 255, 0), 2)
+    return cv
+        
 
 # Iniitialise model and seat bounding boxes
 model = torch.hub.load('ultralytics/yolov5', 'yolov5s',
                        pretrained=True)
-f = open('initBB.json')
+f = open('initialDemoChair.json') #either initialDemoChair.json/ initBB.json
 predefinedBBox = json.load(f)
-seat_queue = deque(maxlen=2) #Queue of max 2 lengths/frames for each seat
-seat_queue.extend([0,0]) #Initialise as empty(0) for both
-seat = [seat_queue, seat_queue,seat_queue,seat_queue] 
-print(seat)
+seat = [[0,0] for _ in range(len(predefinedBBox))]
 
 # Start a socket listening for connections on 0.0.0.0:8000 (0.0.0.0 means
 # all interfaces)
@@ -105,7 +162,9 @@ try:
 
         # Check for occupancy
         coords = results.pandas().xyxy[0].to_dict(orient="records")
-        occupancy = [0, 0, 0, 0]
+        chairs = [coord for coord in coords if coord['name']== 'chair']
+        persons = [coord for coord in coords if coord['name']== 'person']
+        occupancy = [0 for _ in range(len(predefinedBBox))]
         for coord in coords:  # Iterate through results
             con = coord['confidence']
             cs = coord['class']
@@ -116,6 +175,8 @@ try:
             y2 = int(coord['ymax'])
             if name == 'person' or name == 'backpack' or name == 'suitcase' or name == 'bottle': # If any of these classes identified
                 boxA = [x1, y1, x2, y2]  # Calculate overlap against each bbox
+                # Updated Bbox
+                predefinedBBox = updateBB(chairs,predefinedBBox,persons)
                 for index, coord in enumerate(predefinedBBox):
                     x1 = int(coord['xmin'])
                     y1 = int(coord['ymin'])
@@ -124,21 +185,23 @@ try:
                     boxB = [x1, y1, x2, y2] #Label seats based on Bbox
                     cv2.putText(cv_image, 'Seat{0}'.format(
                         index), (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (36, 255, 12), 2)
+                    
                     if occupancy[index] != 1:
                         intersect_area = bb_intersection_over_union(
                             boxA, boxB)  # Lower overlap requirement for items?
                         if intersect_area > 0.01: #Occupied
-                            cv2.rectangle(cv_image, (x1+1, y1+1),
-                                          (x2+1, y2+1), (0, 0, 255), 2)
+                            # cv2.rectangle(cv_image, (x1+1, y1+1),
+                            #               (x2+1, y2+1), (0, 0, 255), 2)
                             
                             occupancy[index] = 1
                             #print(intersect_area, occupancy)
 
-                        else: #Unoccupied
-                            cv2.rectangle(cv_image, (x1+1, y1+1),
-                                          (x2+1, y2+1), (0, 255, 0), 2)
-                            #print(intersect_area, occupancy)
-        update_occupancy(occupancy,seat)
+                        # else: #Unoccupied
+                        #     cv2.rectangle(cv_image, (x1+1, y1+1),
+                        #                   (x2+1, y2+1), (0, 255, 0), 2)
+                        #     #print(intersect_area, occupancy)
+        occupancy = update_occupancy(occupancy,seat)
+        cv_image = drawBbox(occupancy,cv_image, predefinedBBox)
 
         cv2.imshow('Stream', cv_image)
         print("Image time:" + str(time.time() - start))

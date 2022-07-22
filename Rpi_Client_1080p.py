@@ -8,9 +8,9 @@ client_socket = socket.socket()
 client_socket.connect(('192.168.26.14', 8000))
 connection = client_socket.makefile('wb')
 try:
-    with picamera.PiCamera() as camera:
+    with picamera.PiCamera() as camera: # Camera settings
         camera.resolution = (1920, 1080)
-        camera.framerate = 2
+        camera.framerate = 2 
         camera.rotation = 180
         time.sleep(2)
         start = time.time()
