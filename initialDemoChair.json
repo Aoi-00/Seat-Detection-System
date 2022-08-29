@@ -1,4 +1,5 @@
 [
-    {"xmin": 1070, "ymin": 490, "xmax":1600, "ymax": 1000},
-    {"xmin": 1070, "ymin": 290, "xmax":1400, "ymax": 400}
+    {"xmin": 600, "ymin": 700, "xmax":1000, "ymax": 1000},
+    {"xmin": 750, "ymin": 300, "xmax":1050, "ymax": 420},
+    {"xmin": 1150, "ymin": 300, "xmax":1400, "ymax": 420}
 ]
