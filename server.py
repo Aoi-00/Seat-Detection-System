@@ -141,7 +141,7 @@ model = torch.hub.load('ultralytics/yolov5', 'yolov5s',
                        pretrained=True)
 f = open('initBB.json')  # either initialDemoChair.json/ initBB.json
 predefinedBBox = json.load(f)
-seat = [[0, 0] for _ in range(len(predefinedBBox))]
+seat = [[0, 0, 0] for _ in range(len(predefinedBBox))] #Ideal is 3-5 fps, ~7 starts having delay
 
 # Start a socket listening for connections on 0.0.0.0:8000 (0.0.0.0 means
 # all interfaces)
@@ -191,7 +191,7 @@ try:
             x2 = int(coord['xmax'])
             y2 = int(coord['ymax'])
             # If any of these classes identified
-            if name == 'person' or name == 'backpack' or name == 'suitcase' or name == 'bottle':
+            if name == 'person': #or name == 'backpack' or name == 'suitcase' or name == 'bottle':
                 boxA = [x1, y1, x2, y2]  # Calculate overlap against each bbox
                 # Updated Bbox
                 #predefinedBBox = updateBB(chairs, predefinedBBox, persons)
