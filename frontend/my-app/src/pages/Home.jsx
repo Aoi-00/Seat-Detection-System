@@ -4,6 +4,8 @@ import { connect } from 'react-redux'
 import PropTypes from 'prop-types'
 import { fetchLib, fetchData } from '../Redux/Actions/SeatActions'
 import Card from '../components/Card'
+import Canvas from '../components/Canvas'
+import Modal from '../components/Modal'
 
 
 class Home extends Component {
@@ -45,12 +47,14 @@ class Home extends Component {
                 id: 'LWNL',
                 location:'NS3-03-01'
             }
-        ]
+        ],
+        showSeats: false,
+        showModal:false
     }
 
     componentDidMount() {
         this.props.fetchLib();
-        this.interval = setInterval(() => {this.props.fetchData()}, 1000);
+        //this.interval = setInterval(() => {this.props.fetchData()}, 1000);
     }
 
     // componentDidUpdate(prevProps, prevState) {
@@ -60,6 +64,13 @@ class Home extends Component {
 
     componentWillUnmount() {
         clearInterval(this.interval)
+    }
+
+    toggleLayout(){
+        this.setState({showSeats: !this.state.showSeats})
+    }
+    toggleModal = () =>{
+        this.setState({showModal: !this.state.showModal}, () => console.log(this.state.showModal))
     }
     render() {
         return (
@@ -72,11 +83,15 @@ class Home extends Component {
                         { this.props.vacancy && this.state.library.map((lib) => {
                             return(
                                 <MDBCol lg='4' md='6'>
-                                    <Card post={lib} vacancy={this.props.vacancy} />
+                                    <Card post={lib} vacancy={this.props.vacancy} onClick={()=> this.toggleLayout()} />
                                 </MDBCol>
                             )
                         })}
                     </MDBRow>
+                    <MDBRow>
+                        {this.state.showSeats && this.props.data && <Canvas data={this.props.data} toggleModal={this.toggleModal} />}
+                    </MDBRow>
+                    <Modal toggleModal={this.toggleModal} showModal={this.state.showModal} />
                 </MDBContainer>
             </div>
         )

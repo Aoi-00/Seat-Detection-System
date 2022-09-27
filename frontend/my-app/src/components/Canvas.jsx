@@ -1,0 +1,35 @@
+import { MDBBtn } from "mdb-react-ui-kit";
+import React from "react";
+
+const Canvas = ({ data, toggleModal}) => {
+    let coord = data.coord.map((seat)=> { //find center of seat, based on 1920x1080
+      return {x: (seat.xmax+seat.xmin)/2, y: (seat.ymax+seat.ymin)/2}
+    })
+    let seats = data.seats
+  return (
+    <div>
+      <h3 className="text-center">Layout</h3>
+      <br />
+      <div className="square border border-success rounded mx-auto col-md-6 mb-3" style={{position:"relative", height:"30vh"}}>
+      {coord && coord.map((seat, index) => {
+        return (
+          <MDBBtn
+            key={index}
+            style={{
+              position: "absolute",
+              left: `${seat.x/1920*100}%`,
+              top: `${seat.y/1080*100}%`,
+              width: "15px",
+              height: "40px",
+              backgroundColor: seats[index] ? "red" : "green",
+            }}
+            onClick={toggleModal}
+          ></MDBBtn>
+        );
+      })}
+      </div>
+    </div>
+  );
+}
+
+export default Canvas;
