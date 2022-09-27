@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   MDBBtn,
   MDBModal,
@@ -8,31 +8,67 @@ import {
   MDBModalTitle,
   MDBModalBody,
   MDBModalFooter,
-} from 'mdb-react-ui-kit';
+  MDBInput,
+  MDBValidationItem,
+  MDBValidation,
+} from "mdb-react-ui-kit";
 
-const Modal = ({toggleModal, showModal}) => {
-    const [basicModal, setBasicModal] = useState(showModal);
+const Modal = ({ toggleModal, showModal }) => {
+  const [basicModal, setBasicModal] = useState(showModal);
+  const [email, setEmail] = useState("");
+  const saveEmail = () => {
+    if (email.length && email.includes("@")) {
+        localStorage.setItem("email", email);
+        setEmail("");
+        toggleModal();
+    }
+  };
   return (
     <>
-      <MDBModal staticBackdrop show={showModal} setShow={setBasicModal} tabIndex='-1'>
+      <MDBModal
+        staticBackdrop
+        show={showModal}
+        setShow={setBasicModal}
+        tabIndex="-1"
+      >
         <MDBModalDialog>
           <MDBModalContent>
             <MDBModalHeader>
-              <MDBModalTitle>Modal title</MDBModalTitle>
-              <MDBBtn className='btn-close' color='none' onClick={toggleModal}></MDBBtn>
+              <MDBModalTitle>Get Email Notification</MDBModalTitle>
+              <MDBBtn
+                className="btn-close"
+                color="none"
+                onClick={toggleModal}
+              ></MDBBtn>
             </MDBModalHeader>
-            <MDBModalBody>...</MDBModalBody>
+            <MDBValidation>
+            <MDBModalBody>
+              <MDBValidationItem feedback="Please enter your email." invalid>
+                <MDBInput
+                  type="email"
+                  className="form-control"
+                  id="validationCustomUsername"
+                  label="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </MDBValidationItem>
+            </MDBModalBody>
 
             <MDBModalFooter>
-              <MDBBtn color='secondary' onClick={toggleModal}>
+              <MDBBtn outline color="danger" type="reset" onClick={toggleModal}>
                 Close
               </MDBBtn>
-              <MDBBtn onClick={toggleModal}>Save changes</MDBBtn>
+              <MDBBtn outline type="submit" onClick={saveEmail}>
+                Save changes
+              </MDBBtn>
             </MDBModalFooter>
+            </MDBValidation>
           </MDBModalContent>
         </MDBModalDialog>
       </MDBModal>
     </>
   );
-}
+};
 export default Modal;

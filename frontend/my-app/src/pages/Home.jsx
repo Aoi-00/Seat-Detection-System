@@ -53,10 +53,10 @@ class Home extends Component {
     }
 
     componentDidMount() {
-        this.props.fetchLib();
-        //this.interval = setInterval(() => {this.props.fetchData()}, 1000);
+        this.props.fetchLib(); //fetch overall Library vacancy
+        this.interval = setInterval(() => {this.props.fetchData()}, 1000); //fetch data from RPI FLASK every 1 second
     }
-
+    // possible optimisation of fetch so it doesnt rerender every 1s
     // componentDidUpdate(prevProps, prevState) {
     //     console.log('fetched success')
     //     console.log(this.props.data)
@@ -70,7 +70,7 @@ class Home extends Component {
         this.setState({showSeats: !this.state.showSeats})
     }
     toggleModal = () =>{
-        this.setState({showModal: !this.state.showModal}, () => console.log(this.state.showModal))
+        this.setState({showModal: !this.state.showModal})
     }
     render() {
         return (
