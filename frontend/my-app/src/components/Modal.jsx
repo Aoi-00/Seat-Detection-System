@@ -71,4 +71,4 @@ const Modal = ({ toggleModal, showModal }) => {
     </>
   );
 };
-export default Modal;
+export default React.memo(Modal);

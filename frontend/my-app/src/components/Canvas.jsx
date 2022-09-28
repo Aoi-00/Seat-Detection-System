@@ -79,4 +79,4 @@ const Canvas = ({ data, toggleModal }) => {
   );
 };
 
-export default Canvas;
+export default React.memo(Canvas);

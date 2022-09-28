@@ -56,11 +56,13 @@ class Home extends Component {
         this.props.fetchLib(); //fetch overall Library vacancy
         this.interval = setInterval(() => {this.props.fetchData()}, 1000); //fetch data from RPI FLASK every 1 second
     }
-    // possible optimisation of fetch so it doesnt rerender every 1s
-    // componentDidUpdate(prevProps, prevState) {
-    //     console.log('fetched success')
-    //     console.log(this.props.data)
-    // }
+    // Checks prop values so it doesnt rerender every 1s
+    shouldComponentUpdate(nextProps, nextState) {
+        if (JSON.stringify(this.props.data) !== JSON.stringify(nextProps.data) || JSON.stringify(this.state) !== JSON.stringify(nextState)) {
+            return true;
+        }
+        return false;
+    }
 
     componentWillUnmount() {
         clearInterval(this.interval)

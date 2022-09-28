@@ -34,4 +34,4 @@ const Card = ({ post, vacancy, onClick }) => {
     </MDBCol>
   );
 };
-export default Card;
+export default React.memo(Card);
