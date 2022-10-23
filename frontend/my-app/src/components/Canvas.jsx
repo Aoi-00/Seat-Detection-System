@@ -1,4 +1,4 @@
-import { MDBBtn } from "mdb-react-ui-kit";
+import { MDBBtn, MDBSpinner } from "mdb-react-ui-kit";
 import React from "react";
 import { useEffect } from "react";
 import emailjs from "@emailjs/browser";
@@ -40,14 +40,15 @@ const Canvas = ({ data, toggleModal }) => {
 
   useEffect(() => {
     let monitoredSeat = localStorage.getItem("seat");
-    if (monitoredSeat && localStorage.getItem("email")){
-      if (seats[monitoredSeat] === 0) { //if vacant
+    if (monitoredSeat && localStorage.getItem("email")) {
+      if (seats[monitoredSeat] === 0) {
+        //if vacant
         sendEmail();
         localStorage.removeItem("seat");
         localStorage.removeItem("email");
       }
     }
-  }, [coord,seats]);
+  }, [coord, seats]);
   return (
     <div>
       <h3 className="text-center">Layout</h3>
@@ -56,7 +57,7 @@ const Canvas = ({ data, toggleModal }) => {
         className="square border border-success rounded mx-auto col-md-6 mb-3"
         style={{ position: "relative", height: "30vh" }}
       >
-        {coord &&
+        {coord ? (
           coord.map((seat, index) => {
             return (
               <MDBBtn
@@ -73,7 +74,15 @@ const Canvas = ({ data, toggleModal }) => {
                 onClick={registerEmail}
               ></MDBBtn>
             );
-          })}
+          })
+        ) : (
+          <MDBSpinner
+            className="mx-auto"
+            style={{ width: "3rem", height: "3rem" }}
+          >
+            <span className="visually-hidden">Loading...</span>
+          </MDBSpinner>
+        )}
       </div>
     </div>
   );
