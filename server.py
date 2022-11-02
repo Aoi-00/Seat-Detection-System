@@ -141,7 +141,7 @@ model = torch.hub.load('ultralytics/yolov5', 'yolov5s',
                        pretrained=True)
 f = open('initBB.json')  # either initialDemoChair.json/ initBB.json
 predefinedBBox = json.load(f)
-seat = [[0, 0, 0] for _ in range(len(predefinedBBox))] #Ideal is 3-5 fps, ~7 starts having delay
+seat = [[0, 0, 0,0] for _ in range(len(predefinedBBox))] #Ideal is 3-5 fps, ~7 starts having delay
 
 # Start a socket listening for connections on 0.0.0.0:8000 (0.0.0.0 means
 # all interfaces)
@@ -191,7 +191,7 @@ try:
             x2 = int(coord['xmax'])
             y2 = int(coord['ymax'])
             # If any of these classes identified
-            if name == 'person': #or name == 'backpack' or name == 'suitcase' or name == 'bottle':
+            if name == 'person' or name == 'backpack' or name == 'suitcase' or name == 'bottle':
                 boxA = [x1, y1, x2, y2]  # Calculate overlap against each bbox
                 # Updated Bbox
                 #predefinedBBox = updateBB(chairs, predefinedBBox, persons)
@@ -206,18 +206,9 @@ try:
 
                     if occupancy[index] != 1:
                         intersect_area = bb_intersection_over_union(
-                            boxA, boxB)  # Lower overlap requirement for items?
+                            boxA, boxB) 
                         if intersect_area > 0.01:  # Occupied
-                            # cv2.rectangle(cv_image, (x1+1, y1+1),
-                            #               (x2+1, y2+1), (0, 0, 255), 2)
-
                             occupancy[index] = 1
-                            #print(intersect_area, occupancy)
-
-                        # else: #Unoccupied
-                        #     cv2.rectangle(cv_image, (x1+1, y1+1),
-                        #                   (x2+1, y2+1), (0, 255, 0), 2)
-                        #     #print(intersect_area, occupancy)
         occupancy = update_occupancy(occupancy, seat)
         cv_image = drawBbox(occupancy, cv_image, predefinedBBox)
         
