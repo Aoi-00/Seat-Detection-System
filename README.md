@@ -14,5 +14,5 @@ This is my Final Year Project on Seat Vacancy Detection System through image rec
 2. Connect image processing PC to the RPI Wifi network (Name: HyFYP, password: HyFYP2022)
 3. Run Rpi_Client_1080p.py (OR rpi_trial.py which uses split frame but since we only require 2fps on this project, the Rpi_Client_1080p is sufficient) on RPI & server.py on PC.
 4. Run app.py for python FLASK backend to fetch results.
-5. Go to my-app and type 'npm start' to run the website.
+5. Go to my-app and type 'npm install' to install relevant dependencies and 'npm start' to run the website.
 
