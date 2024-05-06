@@ -16,3 +16,15 @@ This is my Final Year Project on Seat Vacancy Detection System through image rec
 4. Run app.py for python FLASK backend to fetch results.
 5. Go to my-app and type 'npm install' to install relevant dependencies and 'npm start' to run the website.
 
+## Demos
+### Web Demo
+https://github.com/Aoi-00/Seat-Detection-System/assets/61011887/720f5018-64dc-44d7-8cea-371a412a8ada
+
+### Email notification feature
+https://github.com/Aoi-00/Seat-Detection-System/assets/61011887/5b39e32d-fa02-4894-877b-bd04c2097e71
+
+### Update Bounding box if seat moves feature
+https://github.com/Aoi-00/Seat-Detection-System/assets/61011887/e5bd597c-1edf-4785-b59a-c3de9e45e118
+
+
+
